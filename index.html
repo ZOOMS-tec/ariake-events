@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>今日の有明イベント</title>
+<style>
+:root{--bg:#0f1b2d;--fg:#f4f7fb;--sub:#9fb3cc;--card:#1b2c45;--acc:#ffb84d;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4f7fb;--fg:#10203a;--sub:#4c5f7a;--card:#fff;--acc:#d9780b;color-scheme:light}}
+:root[data-theme="dark"]{--bg:#0f1b2d;--fg:#f4f7fb;--sub:#9fb3cc;--card:#1b2c45;--acc:#ffb84d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Hiragino Sans","Noto Sans JP",sans-serif;padding:3vh 4vw}
+header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+h1{margin:0;font-size:clamp(20px,3.2vw,40px)}
+#date{color:var(--acc);font-size:clamp(20px,3.2vw,40px);font-weight:700}
+#clock{color:var(--sub);font-size:clamp(16px,2.4vw,28px)}
+#list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:2vh 2vw;margin-top:3vh}
+.card{background:var(--card);border-radius:16px;padding:2.2vh 2vw}
+.place{color:var(--acc);font-size:clamp(14px,1.8vw,22px)}
+.title{font-size:clamp(20px,2.8vw,36px);font-weight:700;margin:.3em 0}
+.meta{color:var(--sub);font-size:clamp(14px,1.8vw,22px)}
+.tag{display:inline-block;background:var(--acc);color:#10203a;border-radius:6px;padding:0 .5em;font-size:.7em;margin-left:.5em}
+#empty{margin-top:10vh;text-align:center;color:var(--sub);font-size:clamp(20px,3vw,36px)}
+</style>
+</head>
+<body>
+<header><h1>今日の有明・お台場エリアのイベント</h1><div><span id="date"></span> <span id="clock"></span></div></header>
+<main id="list"></main>
+<p id="empty" hidden>本日開催のイベント情報はありません</p>
+<script>
+var EVENTS=[];
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function render(){
+ var now=new Date(),t=ymd(now),w="日月火水木金土"[now.getDay()];
+ document.getElementById("date").textContent=(now.getMonth()+1)+"月"+now.getDate()+"日（"+w+"）";
+ document.getElementById("clock").textContent=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+ var items=EVENTS.filter(function(e){return e.start<=t&&t<=e.end});
+ document.getElementById("list").innerHTML=items.map(function(e){
+  return '<section class="card"><div class="place">'+esc(e.place)+(e.sample?'<span class="tag">サンプル</span>':'')+'</div><div class="title">'+esc(e.title)+'</div><div class="meta">'+esc(e.time||"")+'</div></section>'}).join("");
+ document.getElementById("empty").hidden=items.length>0;
+}
+function load(){
+ fetch("events.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){EVENTS=d;render()}).catch(function(){render()});
+}
+render();load();setInterval(render,30000);setInterval(load,600000);
+</script>
+</body>
+</html>
