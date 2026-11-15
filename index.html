@@ -2,56 +2,29 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今日の有明イベント</title>
-<style>
-:root{--bg:#0f1b2d;--fg:#f4f7fb;--sub:#9fb3cc;--card:#1b2c45;--acc:#ffb84d;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4f7fb;--fg:#10203a;--sub:#4c5f7a;--card:#fff;--acc:#d9780b;color-scheme:light}}
-:root[data-theme="dark"]{--bg:#0f1b2d;--fg:#f4f7fb;--sub:#9fb3cc;--card:#1b2c45;--acc:#ffb84d}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:"Hiragino Sans","Noto Sans JP",sans-serif;padding:3vh 4vw}
-header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
-h1{margin:0;font-size:clamp(20px,3.2vw,40px)}
-#date{color:var(--acc);font-size:clamp(20px,3.2vw,40px);font-weight:700}
-#clock{color:var(--sub);font-size:clamp(16px,2.4vw,28px)}
-#list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:2vh 2vw;margin-top:3vh}
-.card{background:var(--card);border-radius:16px;padding:2.2vh 2vw}
-.place{color:var(--acc);font-size:clamp(14px,1.8vw,22px)}
-.title{font-size:clamp(20px,2.8vw,36px);font-weight:700;margin:.3em 0}
-.meta{color:var(--sub);font-size:clamp(14px,1.8vw,22px)}
-.tag{display:inline-block;background:var(--acc);color:#10203a;border-radius:6px;padding:0 .5em;font-size:.7em;margin-left:.5em}
-h2{color:var(--sub);font-size:clamp(18px,2.4vw,28px);margin:4vh 0 0}#up{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:1.5vh 2vw;margin-top:2vh}#up .card{opacity:.85}#empty{margin-top:10vh;text-align:center;color:var(--sub);font-size:clamp(20px,3vw,36px)}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARIake EVENT CALENDAR｜有明エリアのイベント情報</title>
+<meta name="description" content="東京ビッグサイト・東京ガーデンシアター・有明アリーナ・有明ガーデンのイベント情報をまとめて確認">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header><h1>今日の有明・お台場エリアのイベント</h1><div><span id="date"></span> <span id="clock"></span></div></header>
-<main id="list"></main>
-<h2 id="uh" hidden>これからの予定（7日以内）</h2><main id="up"></main>
-<p id="empty" hidden>本日開催のイベント情報はありません</p>
-<script>
-var EVENTS=[];
-var PRI=["東京ガーデンシアター","東京ビッグサイト","有明アリーナ","有明GYM-EX","有明ガーデン"];
-function pri(e){for(var i=0;i<PRI.length;i++){if(e.place.indexOf(PRI[i])===0)return i}return 9}
-function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
-function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function render(){
- var now=new Date(),t=ymd(now),w="日月火水木金土"[now.getDay()];
- document.getElementById("date").textContent=(now.getMonth()+1)+"月"+now.getDate()+"日（"+w+"）";
- document.getElementById("clock").textContent=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
- var items=EVENTS.filter(function(e){return e.start<=t&&t<=e.end}).sort(function(a,b){return pri(a)-pri(b)});
- document.getElementById("list").innerHTML=items.map(function(e){
-  return '<section class="card"><div class="place">'+esc(e.place)+(e.cat?'<span class="tag">'+esc(e.cat)+'</span>':'')+'</div><div class="title">'+esc(e.title)+'</div><div class="meta">'+esc(e.time||"")+'</div></section>'}).join("");
- document.getElementById("empty").hidden=items.length>0;
- var lim=new Date(now.getTime()+7*864e5),l=ymd(lim);
- var up=EVENTS.filter(function(e){return e.start>t&&e.start<=l}).sort(function(a,b){return pri(a)-pri(b)||(a.start<b.start?-1:1)});
- document.getElementById("uh").hidden=!up.length;
- document.getElementById("up").innerHTML=up.map(function(e){var m=e.start.split("-");
-  return '<section class="card"><div class="place">'+esc(e.place)+(e.cat?'<span class="tag">'+esc(e.cat)+'</span>':'')+'</div><div class="title">'+esc(e.title)+'</div><div class="meta">'+Number(m[1])+'/'+Number(m[2])+' から</div></section>'}).join("");
-}
-function load(){
- fetch("events.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){EVENTS=d;render()}).catch(function(){render()});
-}
-render();load();setInterval(render,30000);setInterval(load,600000);
-</script>
+<header class="hd">
+ <div class="wrap hd-in">
+  <div><h1>ARIake EVENT CALENDAR</h1><p class="sub">有明エリアのイベント情報をひと目で確認</p></div>
+  <div class="now"><div id="date" class="date">--</div><div id="clock" class="clock">--:--</div><div class="upd">データ更新：<span id="updated">--</span></div></div>
+ </div>
+</header>
+<main class="wrap">
+ <section class="ctl" aria-label="絞り込み">
+  <div id="facs" class="row" role="group" aria-label="施設"></div>
+  <div id="pers" class="row seg" role="group" aria-label="期間"></div>
+  <input id="q" type="search" placeholder="イベント名・施設・カテゴリで検索" aria-label="キーワード検索" autocomplete="off">
+ </section>
+ <p id="count" class="count" aria-live="polite"></p>
+ <div id="list" class="list"></div>
+ <div id="msg" class="msg" hidden></div>
+</main>
+<footer class="wrap ft">掲載情報は各施設の公式サイトをもとにしています。最新・詳細は必ず公式サイトでご確認ください。</footer>
+<script src="js/app.js"></script>
 </body>
 </html>
