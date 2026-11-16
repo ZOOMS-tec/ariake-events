@@ -116,10 +116,16 @@ def test_main_updates_and_dry_run_does_not(tmp_path):
     assert doc["metadata"]["timezone"] == "Asia/Tokyo" and c.validate_document(doc) == []
 
 
-def test_real_scrapers_fail_safely_until_implemented(tmp_path):
+def test_real_scrapers_fail_safely_on_network_error(tmp_path):
+    from tests.helpers import FakeSession  # 全URLが404の状態
     p = seed(tmp_path)
     before = p.read_text(encoding="utf-8")
-    assert m.run(str(p)) == 1
+    orig = c.make_session
+    c.make_session = lambda: FakeSession({})
+    try:
+        assert m.run(str(p)) == 1
+    finally:
+        c.make_session = orig
     assert p.read_text(encoding="utf-8") == before
 
 

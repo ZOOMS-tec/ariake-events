@@ -54,15 +54,20 @@ def make_session() -> requests.Session:
     return s
 
 
+FETCH_INTERVAL = 1.0  # アクセス間隔（秒）。テストでは0にする
+
+
 def fetch(session: requests.Session, url: str, *, retries: int = 3, timeout: int = 20,
-          interval: float = 1.0, backoff: float = 2.0) -> requests.Response:
+          interval: float | None = None, backoff: float = 2.0) -> requests.Response:
     """GET。タイムアウト・指数バックオフ・アクセス間隔つき。4xxは再試行しない。"""
     last: Exception | None = None
+    interval = FETCH_INTERVAL if interval is None else interval
     for i in range(retries):
         time.sleep(interval)
         try:
             r = session.get(url, timeout=timeout)
             if r.status_code < 400:
+                r.encoding = r.encoding if (r.encoding and r.encoding.lower() != "iso-8859-1") else r.apparent_encoding
                 return r
             last = FetchError(f"HTTP {r.status_code}: {url}")
             if r.status_code < 500 and r.status_code != 429:
@@ -238,3 +243,15 @@ def atomic_write_json(path: str, doc: dict) -> None:
     finally:
         if os.path.exists(tmp):
             os.remove(tmp)
+
+
+def clean_title(t: str | None) -> str:
+    """表示用の軽い整形（日付や内容は変えない）：「｜POP-UP｜」→「POP-UP 」、「＜11/12更新＞」を除く。"""
+    t = re.sub(r"\s+", " ", t or "").strip()
+    t = re.sub(r"^[＜<]\d{1,2}/\d{1,2}更新[＞>]\s*", "", t)
+    t = re.sub(r"^｜(.+?)｜\s*", r"\1 ", t)
+    return t.strip()
+
+
+def text_of(node) -> str:
+    return re.sub(r"\s+", " ", node.get_text(" ", strip=True)) if node is not None else ""
