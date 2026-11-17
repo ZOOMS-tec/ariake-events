@@ -29,16 +29,20 @@ def parse(html: str, page_url: str) -> tuple[list[dict], list[str], list[str]]:
     """(イベント, 除外ログ, たどるべき他ページのURL) を返す。"""
     soup = BeautifulSoup(html, "lxml")
     ul = soup.select_one("ul.list_schedule")
-    if ul is None:
-        raise ValueError("公演一覧(ul.list_schedule)が見つからない：ページ構造が変わった可能性")
     active = soup.select_one(".nav_scheduleMonthLink li.-active a[href]")
-    ym = month_of(active["href"]) if active else month_of(page_url)
-    if not ym:
+    ym = (month_of(active["href"]) if active else None) or month_of(page_url)
+    month_nav = soup.select_one("nav.nav_scheduleMonth")
+    if ul is None and month_nav is None:
+        raise ValueError("公演一覧(ul.list_schedule)も月ナビ(nav.nav_scheduleMonth)も見つからない：ページ構造が変わった可能性")
+    if not ym and ul is not None:
         raise ValueError("表示中の年月を判定できない")
-    year, month = int(ym[:4]), int(ym[5:])
     links = [urljoin(page_url, a["href"]).split("#")[0]
              for a in soup.select(".nav_scheduleMonthLink a[href], .nav_scheduleMonthPagenation a[href]")]
     events, notes = [], []
+    if ul is None:  # 月ナビはあるが公演一覧の枠がない＝その月は公演なし、と扱う
+        notes.append(f"{ym or page_url}：公演一覧の枠なし（0件として扱う）")
+        return events, notes, links
+    year, month = int(ym[:4]), int(ym[5:])
     for li in ul.select(":scope > li"):
         m, d = c.text_of(li.select_one(".ymd .m")), c.text_of(li.select_one(".ymd .d"))
         title, player = c.text_of(li.select_one(".title")), c.text_of(li.select_one(".player"))
@@ -68,7 +72,10 @@ def scrape(session) -> c.ScrapeResult:
         if len(seen) >= MAX_PAGES:
             raise ValueError("ページ数が上限を超えた（ループの可能性）")
         seen.add(key)
-        ev, nt, links = parse(c.fetch(session, url).text, url)
+        try:
+            ev, nt, links = parse(c.fetch(session, url).text, url)
+        except ValueError as e:
+            raise ValueError(f"{e} [{url}]") from e
         events += ev
         notes += nt
         queue += [u for u in links if (month_of(u) or "default") not in seen]

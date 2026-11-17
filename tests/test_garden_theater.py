@@ -38,3 +38,20 @@ def test_missing_list_is_error():
     except ValueError:
         return
     raise AssertionError
+
+
+def test_month_without_events_is_zero_not_error():
+    import re
+    html = re.sub(r'<ul class="list_schedule">.*?</ul>', "", fixture("garden_theater.html"), flags=re.S)
+    ev, notes, links = t.parse(html, BASE + "?date=2027-05")
+    assert ev == [] and "公演一覧の枠なし" in notes[0] and links
+
+
+def test_error_message_names_the_page():
+    pages = {BASE: "<html><body>error page</body></html>"}
+    try:
+        t.scrape(FakeSession(pages))
+    except ValueError as e:
+        assert BASE in str(e)
+        return
+    raise AssertionError
