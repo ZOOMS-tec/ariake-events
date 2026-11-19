@@ -5,8 +5,8 @@ on:
   # スクレイパーを実装して動作確認できるまでは、自動実行を有効にしない。
   # 有効にするときは、下の3行の先頭の「# 」を外す（日本時間9:17。GitHubのtimezone指定を使用）。
    schedule:
-     - cron: "17 9 * * *"
-       timezone: "Asia/Tokyo"
+    - cron: "17 9 * * *"
+      timezone: "Asia/Tokyo"
 
 permissions:
   contents: write
