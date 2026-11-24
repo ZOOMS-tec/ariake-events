@@ -21,6 +21,29 @@ def slug(u):
     return re.sub(r"\W+", "_", p.netloc + p.path).strip("_")
 
 
+def discover_usp(s, report):
+    """有明アーバンスポーツパーク：イベント詳細ページがサイトマップ経由で取得できるか調べる。"""
+    try:
+        idx = c.fetch(s, "https://ariake-usp.com/sitemap.xml", retries=2).text
+    except Exception as e:
+        report.append(f"NG usp sitemap {e}")
+        return
+    for sm in [u for u in re.findall(r"<loc>([^<]+)</loc>", idx) if "ZXZlbnQ" in u]:  # base64「event/:slug」
+        try:
+            xml = c.fetch(s, sm, retries=2).text
+            with open(os.path.join(OUT, "usp_event_sitemap.xml"), "w", encoding="utf-8") as f:
+                f.write(xml)
+            urls = [u for u in re.findall(r"<loc>([^<]+)</loc>", xml) if "/event/" in u]
+            report.append(f"OK usp event sitemap: {len(urls)} urls")
+            for i, u in enumerate(urls[:3]):
+                r = c.fetch(s, u, retries=2)
+                with open(os.path.join(OUT, f"usp_event_detail_{i}.html"), "wb") as f:
+                    f.write(r.content)
+                report.append(f"OK {r.status_code} {len(r.content)}B {u}")
+        except Exception as e:
+            report.append(f"NG usp {e} {sm}")
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     s = c.make_session()
@@ -37,6 +60,7 @@ def main():
                           f"a={h.count('<a ')} script={h.count('<script')} {u}")
         except Exception as e:
             report.append(f"NG {e} {u}")
+    discover_usp(s, report)
     text = "\n".join(report)
     print(text)
     with open(os.path.join(OUT, "_report.txt"), "w", encoding="utf-8") as f:
