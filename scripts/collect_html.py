@@ -10,7 +10,9 @@ URLS = [
     "https://www.shopping-sumitomo-rd.com/tokyo_garden_theater/schedule/",
     "https://ariake-arena.tokyo/event/",
     "https://ariake.shopping-sumitomo-rd.com/event/",
+    "https://ariake-usp.com/event",
 ]
+EXTRA = ["https://ariake-usp.com/sitemap.xml"]  # 追加調査用（サイトマップ）
 OUT = "html_samples"
 
 
@@ -24,10 +26,10 @@ def main():
     s = c.make_session()
     robots = sorted({f"{urlsplit(u).scheme}://{urlsplit(u).netloc}/robots.txt" for u in URLS})
     report = []
-    for u in URLS + robots:
+    for u in URLS + robots + EXTRA:
         try:
             r = c.fetch(s, u, retries=2)
-            name = slug(u) + (".txt" if u.endswith("robots.txt") else ".html")
+            name = slug(u) + (".txt" if u.endswith("robots.txt") else ".xml" if u.endswith(".xml") else ".html")
             with open(os.path.join(OUT, name), "wb") as f:
                 f.write(r.content)
             h = r.text
