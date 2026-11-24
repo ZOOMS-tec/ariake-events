@@ -129,6 +129,13 @@ def test_real_scrapers_fail_safely_on_network_error(tmp_path):
     assert p.read_text(encoding="utf-8") == before
 
 
+def test_ensure_facilities_keeps_existing_and_adds_missing():
+    cur = [{"id": "ariake_arena", "name": "有明アリーナ", "color": "#000000"}]
+    out = c.ensure_facilities(cur)
+    assert [f["id"] for f in out][0] == "ariake_arena" and out[0]["color"] == "#000000"  # 手動調整を保持
+    assert {f["id"] for f in out} == set(c.FACILITY_IDS) and "ariake_usp" in c.FACILITY_IDS
+
+
 def test_current_events_json_is_valid():
     import os
     path = os.path.join(os.path.dirname(__file__), "..", "events.json")

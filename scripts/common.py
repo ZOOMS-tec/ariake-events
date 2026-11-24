@@ -19,7 +19,14 @@ import requests
 log = logging.getLogger("ariake")
 JST = timezone(timedelta(hours=9), "Asia/Tokyo")
 USER_AGENT = "ariake-events-bot/1.0 (+https://github.com/ZOOMS-tec/ariake-events)"
-FACILITY_IDS = ("tokyo_bigsight", "tokyo_garden_theater", "ariake_arena", "ariake_garden")
+FACILITIES = [
+    {"id": "tokyo_bigsight", "name": "東京ビッグサイト", "color": "#1d6fd8", "source_url": "https://www.bigsight.jp/visitor/event/"},
+    {"id": "tokyo_garden_theater", "name": "東京ガーデンシアター", "color": "#8e44ad", "source_url": "https://www.shopping-sumitomo-rd.com/tokyo_garden_theater/schedule/"},
+    {"id": "ariake_arena", "name": "有明アリーナ", "color": "#cf4a1f", "source_url": "https://ariake-arena.tokyo/event/"},
+    {"id": "ariake_garden", "name": "有明ガーデン", "color": "#0f8a5f", "source_url": "https://ariake.shopping-sumitomo-rd.com/event/"},
+    {"id": "ariake_usp", "name": "有明アーバンスポーツパーク", "color": "#c2185b", "source_url": "https://ariake-usp.com/event"},
+]
+FACILITY_IDS = tuple(f["id"] for f in FACILITIES)
 EVENT_KEYS = ("id", "facility_id", "title", "start_date", "end_date", "start_time", "end_time",
               "time_text", "category", "venue_detail", "description", "official_url",
               "source_url", "last_checked")
@@ -222,7 +229,15 @@ def build_document(old: dict, events: list[dict]) -> dict:
     meta = dict(old.get("metadata") or {})
     meta.update({"schema_version": meta.get("schema_version", "2.0"), "last_updated": now_iso(),
                  "timezone": "Asia/Tokyo"})
-    return {"metadata": meta, "facilities": old["facilities"], "events": events}
+    return {"metadata": meta, "facilities": ensure_facilities(old.get("facilities")), "events": events}
+
+
+def ensure_facilities(current) -> list[dict]:
+    """既存の施設情報（色などの手動調整）は保持し、足りない施設だけを追加する。"""
+    out = [dict(f) for f in (current or []) if isinstance(f, dict) and f.get("id")]
+    have = {f["id"] for f in out}
+    out += [dict(f) for f in FACILITIES if f["id"] not in have]
+    return out
 
 
 def atomic_write_json(path: str, doc: dict) -> None:

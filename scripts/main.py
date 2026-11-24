@@ -1,7 +1,7 @@
 """イベント取得のエントリポイント。
 
   python -m scripts.main --dry-run   取得・検証だけ行い events.json は変更しない
-  python -m scripts.main             4施設すべて成功した場合のみ events.json を更新
+  python -m scripts.main             全施設が成功した場合のみ events.json を更新
 """
 from __future__ import annotations
 
@@ -10,10 +10,11 @@ import logging
 import sys
 
 from scripts import common as c
-from scripts.scrapers import ariake_arena, ariake_garden, bigsight, garden_theater
+from scripts.scrapers import ariake_arena, ariake_garden, ariake_usp, bigsight, garden_theater
 
 SCRAPERS = [("東京ビッグサイト", bigsight), ("東京ガーデンシアター", garden_theater),
-            ("有明アリーナ", ariake_arena), ("有明ガーデン", ariake_garden)]
+            ("有明アリーナ", ariake_arena), ("有明ガーデン", ariake_garden),
+            ("有明アーバンスポーツパーク", ariake_usp)]
 log = logging.getLogger("ariake")
 DROP_WARN_RATIO = 0.5  # 前回の半分以下になったら警告（失敗とは判断しない）
 
